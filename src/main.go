@@ -71,8 +71,10 @@ func main() {
 
 	_, err = clientset.CoreV1().Secrets(nameSpace).Get(context.TODO(), secretName, metav1.GetOptions{})
 	if err == nil {
-		_ = clientset.CoreV1().Secrets(nameSpace).Delete(context.TODO(), secretName, metav1.DeleteOptions{})
+		fmt.Printf("Secret '%s/%s' already exists\n", secretName, nameSpace)
+		return
 	}
+
 	_, err = clientset.CoreV1().Secrets(nameSpace).Create(context.TODO(), secret, metav1.CreateOptions{})
 	if err != nil {
 		panic(fmt.Sprintf("Error creating secret: %v\n", err))

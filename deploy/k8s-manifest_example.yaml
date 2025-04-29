@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: jenkins-demo
+  namespace: default
+spec:
+  serviceName: jenkins-demo
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jenkins-demo
+  template:
+    metadata:
+      labels:
+        app: jenkins-demo
+    spec:
+      serviceAccountName: jenkins-demo-sa
+      containers:
+      - name: jenkins
+        image: jenkins/jenkins:lts
+        ports:
+        - containerPort: 8080
+          name: http
+        - containerPort: 50000
+          name: agent
+        volumeMounts:
+        - name: jenkins-home
+          mountPath: /var/jenkins_home
+        lifecycle:
+          postStart:
+            exec:
+              command: ["/bin/sh", "-c", "echo 'Main container started'; sleep 30"]
+      - name: k8s-file-to-secret
+        image: ghcr.io/alirionx/k8s-file-to-secret:latest
+        env:
+        - name: FILEPATH
+          value: /etc/hosts
+        - name: NAMESPACE
+          value: default
+        volumeMounts:
+        - name: jenkins-home
+          mountPath: /var/jenkins_home
+  volumeClaimTemplates:
+  - metadata:
+      name: jenkins-home
+    spec:
+      # storageClassName: local-path
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 4Gi
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: jenkins-demo-sa
+  namespace: default
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: jenkins-demo
+  namespace: default
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "create"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: jenkins-demo-sa-binding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: jenkins-demo
+subjects:
+- kind: ServiceAccount
+  name: jenkins-demo-sa
+  namespace: default
+
+---
