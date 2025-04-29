@@ -72,13 +72,12 @@ func main() {
 	_, err = clientset.CoreV1().Secrets(nameSpace).Get(context.TODO(), secretName, metav1.GetOptions{})
 	if err == nil {
 		fmt.Printf("Secret '%s/%s' already exists\n", secretName, nameSpace)
-		return
+	} else {
+		_, err = clientset.CoreV1().Secrets(nameSpace).Create(context.TODO(), secret, metav1.CreateOptions{})
+		if err != nil {
+			panic(fmt.Sprintf("Error creating secret: %v\n", err))
+		}
+		fmt.Printf("Secret '%s/%s' created successfully\n", secretName, nameSpace)
 	}
-
-	_, err = clientset.CoreV1().Secrets(nameSpace).Create(context.TODO(), secret, metav1.CreateOptions{})
-	if err != nil {
-		panic(fmt.Sprintf("Error creating secret: %v\n", err))
-	}
-
-	fmt.Printf("Secret '%s/%s' created successfully\n", secretName, nameSpace)
+	select {}
 }

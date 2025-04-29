@@ -32,6 +32,7 @@ spec:
               command: ["/bin/sh", "-c", "echo 'Main container started'; sleep 30"]
       - name: k8s-file-to-secret
         image: ghcr.io/alirionx/k8s-file-to-secret:latest
+        imagePullPolicy: Always
         env:
         - name: FILEPATH
           value: /etc/hosts
@@ -40,6 +41,7 @@ spec:
         volumeMounts:
         - name: jenkins-home
           mountPath: /var/jenkins_home
+      
   volumeClaimTemplates:
   - metadata:
       name: jenkins-home
